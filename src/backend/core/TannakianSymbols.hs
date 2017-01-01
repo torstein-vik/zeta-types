@@ -16,14 +16,36 @@ import Prelude hiding ((+),(-),(*),(^),(/), negate)
 
 import Algebra
 
-
---TODO: Optimize
+-----------------------------------------------------------------------------
+-- This module is dedicated to working with TannakianSymbols.
+-- It would be great to define TannakianSymbol m = Map m Int,
+-- but I want TS to be a Monad
+-----------------------------------------------------------------------------
 
 type TannakianSymbol m = [(m, Int)]
 
 data TS m = Symbol (TannakianSymbol m)
 
 unSymbol (Symbol x) = x
+
+
+
+
+instance Functor TS where
+    fmap f (Symbol x) = Symbol . fmap (mapFst f) $ x
+
+instance Applicative TS where
+    (<*>) = ap
+    pure = return
+
+instance Monad TS where
+    return x = Symbol [(x, 1)]
+    Symbol x >>= f = Symbol . concat . map (\(a, n) -> map (mapSnd (*n)) (unSymbol . f $ a)) $ x
+    
+    
+-----------------------------------------------------------------------------
+-- OBSOLETE CODE:
+-----------------------------------------------------------------------------
 
 --charFunction :: TS m -> (m -> Int)
 --charFunction (Symbol ts) n = Map.findWithDefault 0 n ts
@@ -67,20 +89,6 @@ instance (Ord m, Show m) => Show (TS m) where
             | Map.null x = "Ø"
             | otherwise = "{" ++ (intercalate ", " $ (map show (expand x))) ++ "}"-}
 
-
-
-instance Functor TS where
-    fmap f (Symbol x) = Symbol . fmap (mapFst f) $ x
-
-instance Applicative TS where
-    (<*>) = ap
-    pure = return
-
-instance Monad TS where
-    return x = Symbol [(x, 1)]
-    Symbol x >>= f = Symbol . concat . map (\(a, n) -> map (mapSnd (*n)) (unSymbol . f $ a)) $ x
-
--- OBSOLETE CODE:
 
 {-instance (Read m) => Read (TS m) where
     readPrec = parens 
