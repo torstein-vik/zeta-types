@@ -36,3 +36,11 @@ This framework is and will remain completely open source, under the GNU General 
 * Experiment Managment: Python/sagemath
 * Database: RethinkDB
 * Website: HTML, CSS, Javascript, JQuery (duh)
+
+## FOLDER STRUCTURE
+
+* doc -- all kinds of documentation
+* src -- source code
+* -> backend -- main backend logic of the program
+* -> -> core -- data-types and primitive computation
+* -> web -- the website
