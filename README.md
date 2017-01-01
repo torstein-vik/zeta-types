@@ -7,7 +7,8 @@ The project mainly features a haskell backend, interfacing with python/sagemath 
 
 ## Contributors
 _Ask me ([torsteinv64@gmail.com](torsteinv64@gmail.com)) to add you here if you contribute to this project_
-* Torstein Vik, everything
+* Torstein Vik, Everything
+* Andreas Holmstrøm, Design
 
 ## Copyright/License
 
