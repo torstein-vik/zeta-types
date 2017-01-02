@@ -7,6 +7,7 @@ module TannakianSymbols (
 
 import Control.Monad
 
+import Data.List
 import Data.Graph.Inductive.Query.Monad
 
 import qualified Prelude
@@ -89,6 +90,18 @@ instance (Eq m, CMult m) => LambdaRing (TS m) where
 -- Miscellaneous instances:
 -----------------------------------------------------------------------------
 
+instance (Eq m) => Eq (TS m) where
+    x == y = (unSymbol . cleanup) (x - y) == []
+
+instance (Eq m, Show m) => Show (TS m) where
+    show ts = let Symbol x = cleanup ts in showSet (expand (upper x)) ++ "/" ++ showSet (expand (lower x)) where
+        upper =                       filter ((> 0) . snd)
+        lower = map (mapSnd negate) . filter ((< 0) . snd)
+        
+        expand = (>>= uncurry (flip replicate))
+        
+        showSet [] = "Ø"
+        showSet xs = "{" ++ intercalate ", " (map (show) xs) ++ "}"
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
