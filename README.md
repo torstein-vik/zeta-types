@@ -34,7 +34,7 @@ This framework is and will remain completely open source, under the GNU General 
 * Core: C (used to interface with other languages)
 * Type system and primitive computation: Haskell
 * Experiment Managment: Python/sagemath
-* Database: RethinkDB
+* Database: RethinkDB / MongoDB
 * Website: HTML, CSS, Javascript, JQuery (duh)
 
 ## FOLDER STRUCTURE
