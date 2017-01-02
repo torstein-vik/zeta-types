@@ -5,10 +5,8 @@ module TannakianSymbols (
     module Algebra
   ) where
 
-import Control.Applicative
 import Control.Monad
 
-import Data.List as List
 import Data.Graph.Inductive.Query.Monad
 
 import qualified Prelude
@@ -18,21 +16,44 @@ import Algebra
 
 -----------------------------------------------------------------------------
 -- This module is dedicated to working with TannakianSymbols.
--- It would be great to define TannakianSymbol m = Map m Int,
--- but I want TS to be a Monad
+-- It would be best to define data TS m = Symbol (Map m Int),
+-- but I want TS to be a Monad and Map always requires Ord m.
 -----------------------------------------------------------------------------
 
-type TannakianSymbol m = [(m, Int)]
+data TS m = Symbol [(m, Int)]
 
-data TS m = Symbol (TannakianSymbol m)
-
+-- Removes constructor
+unSymbol :: TS m -> [(m, Int)]
 unSymbol (Symbol x) = x
 
+-- Wraps functions into TS
+wrap  :: ([(m, Int)] -> [(n, Int)]) -> TS m -> TS n
+wrap2 :: ([(m, Int)] -> [(n, Int)] -> [(o, Int)]) -> TS m -> TS n -> TS o
+wrap3 :: ([(m, Int)] -> [(n, Int)] -> [(o, Int)] -> [(p, Int)]) -> TS m -> TS n -> TS o -> TS p
+wrap  f (Symbol x) = Symbol $ f x
+wrap2 f (Symbol x) (Symbol y) = Symbol $ f x y
+wrap3 f (Symbol x) (Symbol y) (Symbol z) = Symbol $ f x y z
 
+-- Performs f at each pair (m, Int) of the symbol
+atEach :: ((m, Int) -> (n, Int)) -> TS m -> TS n
+atEach f = wrap $ fmap f
+
+-- Cleans up by adding terms with same type together (like 
+-- (1, 1) and (1, 2)) and removing empty ones like (1, 0)
+cleanup :: (Eq m) => TS m -> TS m
+cleanup = wrap $ removeEmpty . addTogether where
+    removeEmpty = filter  ((/= 0) . snd)
+    addTogether = reverse . foldr (match) [] where
+        match (x, n) ((y, m):xs) = if x == y then (y, n + m):xs else (y, m):(match (x, n) xs)
+        match (x, n) [] = [(x, n)]
+
+-----------------------------------------------------------------------------
+-- Monad implementation:
+-----------------------------------------------------------------------------
 
 
 instance Functor TS where
-    fmap f (Symbol x) = Symbol . fmap (mapFst f) $ x
+    fmap f = atEach (mapFst f)
 
 instance Applicative TS where
     (<*>) = ap
@@ -41,10 +62,38 @@ instance Applicative TS where
 instance Monad TS where
     return x = Symbol [(x, 1)]
     Symbol x >>= f = Symbol . concat . map (\(a, n) -> map (mapSnd (*n)) (unSymbol . f $ a)) $ x
-    
+
     
 -----------------------------------------------------------------------------
+-- Algebraic instances:
+-----------------------------------------------------------------------------
+
+instance CAdd (TS m) where
+    (+)    = wrap2 (++)
+    negate = (>>= (\x -> Symbol [(x, -1)]))
+    zero   = Symbol []
+
+instance (CMult m) => CMult (TS m) where
+    (*) = liftM2 (*)
+    e   = Symbol [(e, 1)]
+
+-- We need Eq to clean up before quot-ing (if we don't we will get bad results)
+instance (Eq m) => CIntDiv (TS m) where
+    x /: n = mapSnd (`quot` n) `atEach` cleanup x
+    
+-- We need Eq because the definition of lambda requires CIntDiv (/:)
+instance (Eq m, CMult m) => LambdaRing (TS m) where
+    psi k = fmap (^k)
+
+-----------------------------------------------------------------------------
+-- Miscellaneous instances:
+-----------------------------------------------------------------------------
+
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
 -- OBSOLETE CODE:
+-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
 --charFunction :: TS m -> (m -> Int)
