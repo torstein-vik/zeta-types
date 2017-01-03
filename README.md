@@ -3,7 +3,7 @@
 
 ## The Project
 
-The project mainly features a haskell backend, interfacing with python/sagemath via FFI and C. Haskell is used because its type- and pattern-matching system and is very practical for working with local zeta types (which may appear in at least four different forms.) We also plan to create a website giving access to information and resources about the grand project, as well as hopefully a large database of zeta-types from various L-functions, and a framework for interacting and computing.
+The project mainly features a haskell backend, interfacing with python/sagemath via FFI and C. Haskell is used because its type- and pattern-matching system and are very practical for working with local zeta types (which may appear in at least four different forms.) We also plan to create a website giving access to information and resources about the grand project, as well as hopefully a large database of zeta-types from various L-functions, and a framework for interacting and computing.
 
 ## Contributors
 _Ask me ([torsteinv64@gmail.com](torsteinv64@gmail.com)) to add you here if you contribute to this project_
