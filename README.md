@@ -5,6 +5,16 @@
 
 The project mainly features a haskell backend, interfacing with python/sagemath via FFI and C. Haskell is used because its type- and pattern-matching system and are very practical for working with local zeta types (which may appear in at least four different forms.) We also plan to create a website giving access to information and resources about the grand project, as well as hopefully a large database of zeta-types from various L-functions, and a framework for interacting and computing.
 
+## Installation
+
+So far, only the haskell core is being developed. To interface with this, you can:
+ 1. Download the haskell files in [src/backend/core](https://github.com/torstein-vik/zeta-types/tree/master/src/backend/core)
+ 2. Install the haskell platform (for instance [https://www.haskell.org/platform/](https://www.haskell.org/platform/))
+ 3. Open a command prompt (cmd, bash, etc...)
+ 4. Navigate to the folder containing the haskell files
+ 5. Type "ghci *.hs" to compile and load the haskell modules
+ 6. Type ":load TannakianSymbols" to load the TannakianSymbols module (or any other for that matter) 
+
 ## Contributors
 _Ask me ([torsteinv64@gmail.com](torsteinv64@gmail.com)) to add you here if you contribute to this project_
 * Torstein Vik, Everything
