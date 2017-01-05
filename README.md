@@ -15,6 +15,10 @@ So far, only the haskell core is being developed. To interface with this, you ca
  5. Type "ghci *.hs" to compile and load the haskell modules
  6. Type ":load TannakianSymbols" to load the TannakianSymbols module (or any other for that matter) 
 
+#### Note:
+
+It is probable that during these stages of early development, some modules might not compile, especially LocalZetaTypes. The other modules however are still uasable, and ghci will tell you which.
+
 ## Contributors
 _Ask me ([torsteinv64@gmail.com](torsteinv64@gmail.com)) to add you here if you contribute to this project_
 * Torstein Vik, Everything
