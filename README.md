@@ -17,7 +17,7 @@ So far, only the haskell core is being developed. To interface with this, you ca
 
 #### Note:
 
-It is probable that during these stages of early development, some modules might not compile, especially LocalZetaTypes. The other modules however are still uasable, and ghci will tell you which.
+It is probable that during these stages of early development, some modules might not compile, especially LocalZetaTypes. The other modules however are still usable, and ghci will tell you which.
 
 ## Contributors
 _Ask me ([torsteinv64@gmail.com](torsteinv64@gmail.com)) to add you here if you contribute to this project_
