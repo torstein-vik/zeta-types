@@ -14,6 +14,7 @@ import qualified Prelude
 import Prelude hiding ((+),(-),(*),(^),(/), negate)
 
 import Algebra
+import Parsing
 
 -----------------------------------------------------------------------------
 -- This module is dedicated to working with TannakianSymbols.
@@ -102,6 +103,27 @@ instance (Eq m, Show m) => Show (TS m) where
         
         showSet [] = "Ø"
         showSet xs = "{" ++ intercalate ", " (map (show) xs) ++ "}"
+
+instance (Read m) => Read (TS m) where
+    readPrec = parens $ do 
+                        x <- readSet
+                        expectC '/'
+                        y <- readSet
+                        return $ (unflatten x) - (unflatten y)
+                         
+            
+            where
+                readSet :: (Read m) => ReadPrec ([m])
+                readSet = (expectC 'Ø' >> return []) 
+                
+                                +++ between '{' '}' (do 
+                                            x <- split ',' readPrec
+                                            return x)
+                            
+                unflatten :: [m] -> TS m 
+                unflatten l = Symbol $ zip l (repeat 1)
+
+
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------

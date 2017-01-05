@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE DataKinds #-}
@@ -7,15 +8,20 @@ module Polynomials where
 
 import GHC.TypeLits
 import Data.Proxy
-import TannakianSymbols as TS
-import Expressions as Expressions
-import Control.Monad as Monad
-import Data.List as List
-import Text.Regex as Regex
-import Text.Read as Read
-import Data.Graph.Inductive.Query.Monad
-import Data.Maybe
---import qualified Text.Read.Lex as L
+
+import Control.Monad as Monad (liftM2)
+import Data.List as List (intercalate)
+
+import qualified Prelude
+import Prelude hiding ((+),(-),(*),(^),(/), negate)
+
+import Algebra
+import Parsing
+
+-----------------------------------------------------------------------------
+-- This module is dedicated to working with polynomials
+-- of any base ring and variable-letter.
+-----------------------------------------------------------------------------
 
 data Polynomial :: * -> Symbol -> * where 
     Coeffs :: [m] -> Polynomial m s deriving Ord
@@ -35,23 +41,23 @@ intoCoeffs x = Coeffs x
 
 paddedZipWith :: (a -> a -> c) -> [a] -> [a] -> a -> [c]
 paddedZipWith f a1 a2 a = let max = maximum (map length [a1, a2]) in 
-    zipWith f (a1 ++ (replicate (max TS.- length a1) a)) (a2 ++ (replicate (max TS.- length a2) a))
+    zipWith f (a1 ++ (replicate (max - length a1) a)) (a2 ++ (replicate (max - length a2) a))
 
 paddedZipWith2 :: (a -> b -> c) -> [a] -> [b] -> a -> b -> [c]
 paddedZipWith2 f al bl a b = let max = maximum [length al, length bl] in 
-    zipWith f (al ++ (replicate (max TS.- length al) a)) (bl ++ (replicate (max TS.- length bl) b))
+    zipWith f (al ++ (replicate (max - length al) a)) (bl ++ (replicate (max - length bl) b))
 
 paddedZip = paddedZipWith (\a -> \b -> [(a, b)])
 paddedZip2 = paddedZipWith2 (\a -> \b -> [(a, b)])
 
 instance (CAdd m) => CAdd (Polynomial m s) where
     zero = Coeffs []
-    Coeffs x + Coeffs y = Coeffs $ paddedZipWith (TS.+) x y zero
-    negate (Coeffs x) = Coeffs $ map TS.negate x
+    Coeffs x + Coeffs y = Coeffs $ paddedZipWith (+) x y zero
+    negate (Coeffs x) = Coeffs $ map negate x
     
 instance (CAdd m, CMult m) => CMult (Polynomial m s) where
     e = Coeffs[e]
-    Coeffs x * Coeffs y = foldr (TS.+) zero . fmap (\(n, x) -> Coeffs $ replicate n zero ++ [x]) $ liftM2 (\(n,x) (m,y) -> (n TS.+ m, x TS.* y)) (zip [0..] x) (zip [0..] y)
+    Coeffs x * Coeffs y = foldr (+) zero . fmap (\(n, x) -> Coeffs $ replicate n zero ++ [x]) $ liftM2 (\(n,x) (m,y) -> (n + m, x * y)) (zip [0..] x) (zip [0..] y)
 
 instance (CAdd m, Eq m) => Eq (Polynomial m s) where
     Coeffs a == Coeffs b = and $ paddedZipWith (==) a b zero
@@ -72,12 +78,73 @@ instance (CAdd m, CMult m, Eq m, Show m, KnownSymbol s) => Show (Polynomial m s)
     
         where
             asCoeff m | m == e = ""
-                      | m == TS.negate e = "-"
+                      | m == negate e = "-"
                       | otherwise = show m
             showTerm :: (CMult m, CAdd m, Eq m, Show m) => (m, Integer) -> String -> String
             showTerm (m, 0) variable = show m
             showTerm (m, 1) variable = asCoeff m ++ variable
             showTerm (m, n) variable = asCoeff m ++ variable ++ "^" ++ show n
+
+
+
+-- TODO: Look into parsing things like "1 - p", as opposed to "1 + -p"
+-- TODO: Fix ambiguous parsing of PolynomialY (PolynomialX Integer)
+instance (CMult m, CAdd m, Read m, KnownSymbol s) => Read (Polynomial m s) where
+    readPrec = parens $ do
+                        terms <- split '+' (parens (readTerm $ symbolVal (Proxy :: Proxy s)))
+                        return $ foldr (+) zero (fmap createCoeffs terms)
+                        
+                        
+            where
+                createCoeffs :: (CAdd m) => (m, Int) -> Polynomial m s
+                createCoeffs (x, n) = Coeffs $ (replicate n zero) ++ [x]
+                
+                readTerm :: (Read m, CMult m, CAdd m) => String -> ReadPrec (m, Int)
+                readTerm variable = zeroDegreeTerm
+                        +++ (firstDegreeTerm variable  <++ nUnitFirstDegreeTerm variable  <++ unitFirstDegreeTerm variable) 
+                        +++ (nDegreeTerm variable      <++ nUnitNDegreeTerm variable      <++ unitNDegreeTerm variable    )
+                
+                zeroDegreeTerm          :: (Read m, CMult m)           => ReadPrec (m, Int)
+                firstDegreeTerm         :: (Read m, CMult m)           => String -> ReadPrec (m, Int)
+                unitFirstDegreeTerm     :: (Read m, CMult m)           => String -> ReadPrec (m, Int)
+                nUnitFirstDegreeTerm    :: (Read m, CMult m, CAdd m)   => String -> ReadPrec (m, Int)
+                nDegreeTerm             :: (Read m, CMult m)           => String -> ReadPrec (m, Int)
+                unitNDegreeTerm         :: (Read m, CMult m)           => String -> ReadPrec (m, Int)
+                nUnitNDegreeTerm        :: (Read m, CMult m, CAdd m)   => String -> ReadPrec (m, Int)
+                
+                zeroDegreeTerm = do 
+                                                    x <- parens $ step readPrec
+                                                    return (x, 0)
+                firstDegreeTerm variable = do
+                                                    x <- parens $ step readPrec
+                                                    expectS variable
+                                                    return (x, 1)
+                unitFirstDegreeTerm variable = do
+                                                    expectS variable
+                                                    return (e, 1)
+                nUnitFirstDegreeTerm variable = do
+                                                    expectC '-'
+                                                    expectS variable
+                                                    return (negate e, 1)
+                nDegreeTerm variable = do 
+                                                    x <- parens $ step readPrec
+                                                    expectS variable
+                                                    expectC '^'
+                                                    n <- readPrec
+                                                    return (x,n)
+                unitNDegreeTerm variable = do
+                                                    expectS variable
+                                                    expectC '^'
+                                                    n <- readPrec
+                                                    return (e,n)
+                nUnitNDegreeTerm variable = do
+                                                    expectC '-'
+                                                    expectS variable
+                                                    expectC '^'
+                                                    n <- readPrec
+                                                    return (negate e,n)
+
+
 
 {-instance Functor Polynomial where
     fmap f (Coeffs c) = Coeffs $ map f c 
