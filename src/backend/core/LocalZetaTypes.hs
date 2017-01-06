@@ -29,7 +29,7 @@ data LocalZetaType :: * -> Nat -> * where
       BellCoeffs       :: [m] -> LocalZetaType m n
       Function         :: (PolynomialT m, PolynomialT m) -> LocalZetaType m n
       TannakianSymbol  :: TS m -> LocalZetaType m n
-      deriving (Ord, Read, Show)
+      deriving (Read, Show)
 
 type LocalZetaTypeC10 = LocalZetaType (Complex Double) 10
 
@@ -39,8 +39,12 @@ toFunction    :: LocalZetaType m n -> LocalZetaType m n
 toSymbol      :: LocalZetaType m n -> LocalZetaType m n
 
 toPointCounts (PointCounts l)     = PointCounts l
-toPointCounts (BellCoeffs l)      = PointCounts . preBellDerivaite $ l
+toPointCounts (BellCoeffs l)      = PointCounts . preBellDerivative $ l
 toPointCounts (Function f)        = toPointCounts . toSymbol $ (Function f) -- optimal?
-toPointCounts (TannakianSymbol s) = PointCounts $ foldr (+) zero 
+toPointCounts (TannakianSymbol s) = undefined --PointCounts $ foldr (+) zero 
 
+toBellCoeffs = undefined
+toFunction = undefined
+toSymbol = undefined
 
+preBellDerivative = undefined
