@@ -61,18 +61,26 @@ class CIntDiv m where
 
 
 instance CAdd Integer where
+    (+) = (Prelude.+)
+    (-) = (Prelude.-)
     zero = 0;
 
 instance CMult Integer where
+    (*) = (Prelude.*)
+    (^) = (Prelude.^)
     e = 1
 
 instance CIntDiv Integer where
     n /: m = n `quot` (toInteger m)
 
 instance CAdd Int where
+    (+) = (Prelude.+)
+    (-) = (Prelude.-)
     zero = 0;
 
 instance CMult Int where
+    (*) = (Prelude.*)
+    (^) = (Prelude.^)
     e = 1
 
 instance CIntDiv Int where
