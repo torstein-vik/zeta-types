@@ -61,26 +61,18 @@ class CIntDiv m where
 
 
 instance CAdd Integer where
-    a + b = a Prelude.+ b
-    a - b = a Prelude.- b
     zero = 0;
 
 instance CMult Integer where
-    a * b = a Prelude.* b
-    x^n = x Prelude.^n
     e = 1
 
 instance CIntDiv Integer where
     n /: m = n `quot` (toInteger m)
 
 instance CAdd Int where
-    a + b = a Prelude.+ b
-    a - b = a Prelude.- b
     zero = 0;
 
 instance CMult Int where
-    a * b = a Prelude.* b
-    x^n = x Prelude.^n
     e = 1
 
 instance CIntDiv Int where
