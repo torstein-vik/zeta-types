@@ -44,8 +44,16 @@ run (Bind pat f)   x      = do
                             z <- (run (f pat1) last)
                             return z
 
-class Valuable m i n where
+class PatternType m where
+    (=:) :: (PatternType n) => m -> n -> Bool
+    x =: y = y =: x
+
+class (PatternType m) => Valuable m i n where
     valuation :: m -> i -> n
+
+instance (PatternType a, PatternType b) => PatternType (Either a b) where
+    (Left  x) =: y = x =: y
+    (Right x) =: y = x =: y
 
 instance (Valuable a i n, Valuable b i n) => Valuable (Either a b) i n where
     valuation (Left a)  = valuation a
@@ -68,18 +76,25 @@ findPattern pat input = case filterPatterns pat input of
                             _ -> Nothing
 
 data Constant a = Constant a
-data Linear a b = Linear a b
+data Linear a   = Linear a a
 
-instance            Valuable (Constant n) a n where
+instance (Eq n) => PatternType (Constant n) where
+    (Constant a1) =: (Constant a2) = a1 == a2
+
+instance (Num n, Eq n) => PatternType (Linear n) where
+    (Linear a1 b1) =: (Linear a2 b2) = a1 == a2 && b1 == b2
+    (Linear a1 b1) =: (Constant a2)  = a1 == a2 && b1 == fromIntegral 0
+
+instance (Eq n) => Valuable (Constant n) a n where
     valuation (Constant a) _ = a
 
-instance (Num n) => Valuable (Linear n n) n n  where
+instance (Num n, Eq n) => Valuable (Linear n) n n  where
     valuation (Linear a b) x = a + b * x
 
-instance (Show a)         => Show (Constant a) where
+instance (Show a) => Show (Constant a) where
     show (Constant a) = show a
     
-instance (Show a, Show b) => Show (Linear a b) where
+instance (Show a) => Show (Linear a) where
     show (Linear a b) = show a ++ " + " ++ show b ++ "x"
 
 constant :: (Eq m) => Pattern n m (Constant m)
@@ -87,7 +102,7 @@ constant = do
         (_, n) <- Next
         return $ Constant n
 
-linear :: (Fractional m, Show m) => Pattern m m (Linear m m)
+linear :: (Fractional m, Show m) => Pattern m m (Linear m)
 linear = do
         (n0, f0) <- Next
         (n1, f1) <- Next
