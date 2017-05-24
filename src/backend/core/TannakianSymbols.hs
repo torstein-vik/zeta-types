@@ -40,6 +40,10 @@ wrap3 f (Symbol x) (Symbol y) (Symbol z) = Symbol $ f x y z
 atEach :: ((m, Int) -> (n, Int)) -> TS m -> TS n
 atEach f = wrap $ fmap f
 
+-- Performs f at each pair (m, Int) of the symbol
+forEach :: ((m, Int) -> n) -> TS m -> [n]
+forEach f = fmap f . unSymbol
+
 -- Cleans up by adding terms with same type together (like 
 -- (1, 1) and (1, 2)) and removing empty ones like (1, 0)
 cleanup :: (Eq m) => TS m -> TS m
@@ -80,10 +84,14 @@ instance (CMult m, Eq m) => CMult (TS m) where
     e   = Symbol [(e, 1)]
 
 -- We need Eq to clean up before quot-ing (if we don't we will get bad results)
-instance (Eq m, CMult m) => CQAlgebra (TS m) where
-    x /# n = mapSnd (`quot` n) `atEach` cleanup x
+instance (Eq m, CMult m) => CPartialQModule (TS m) where
+    x /# n = fmap Symbol . extractMaybe $ mapSnd (/# n) `forEach` cleanup x where
+                  extractMaybe :: [(a, Maybe b)] -> Maybe [(a, b)]
+                  extractMaybe [] = Just []
+                  extractMaybe ((a, Nothing):x) = Nothing
+                  extractMaybe ((a, Just b ):x) = extractMaybe x >>= Just . ((a, b):)
     
--- We need Eq because the definition of lambda requires CQAlgebra (/:)
+-- We need Eq because the definition of lambda requires CPartialQModule (/:)
 instance (Eq m, CMult m) => LambdaRing (TS m) where
     psi k = fmap (^k)
 
