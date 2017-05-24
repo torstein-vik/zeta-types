@@ -33,9 +33,9 @@ class CAdd r where
 class CMult m where
     (*) :: m -> m -> m
     e :: m
-    (^) :: m -> Int -> m
+    (^) :: m -> Integer -> m
 
-    x^n = foldr (*) e (replicate n x)
+    x^n = foldr (*) e (replicate (fromInteger n) x)
     
 -- Minimal definition: ()
 class (CMult m, CAdd m) => CZModule m where
