@@ -5,6 +5,9 @@
 
 module Algebra where
 
+import Control.Monad
+import Data.Maybe
+
 import qualified Prelude
 import Prelude hiding ((+),(-),(*),(^),(/), negate)
 
@@ -35,21 +38,15 @@ class CMult m where
     x^n = foldr (*) e (replicate n x)
     
 -- Minimal definition: ()
-class (CMult m, CAdd m) => CZAlgebra m where
+class (CMult m, CAdd m) => CZModule m where
     structureMap :: Int -> m
     one :: m
     (*#) :: m -> Int -> m
     
-    one = e
-    structureMap k
-                | k == 0 = zero
-                | k >  0 = sum
-                | k <  0 = negate sum
-                where 
-                    sum = foldr (+) zero $ replicate (abs k) one
-    x *# n = x * structureMap n
+    one = structureMap 1
+    structureMap n = one *# n
     
-instance (CMult m, CAdd m) => CZAlgebra m
+--instance (CMult m, CAdd m) => CZAlgebra m
 
 -- Minimal definition (invert | (/))
 class CMult m => CGroup m where
@@ -61,52 +58,87 @@ class CMult m => CGroup m where
 
 -- Minimal definition: psi
 -- TODO: Memoize lambda for speed
-class (CAdd r, CMult r, CQAlgebra r) => LambdaRing r where
-    psi :: Int -> r -> r
-    lambda :: Int -> r -> r
+class (CAdd r, CMult r, CPartialQModule r) => LambdaRing r where
+    psi :: Integer -> r -> r
+    lambda :: Integer -> r -> r
 
     lambda 0 x = e
     lambda 1 x = x
-    lambda n x = (if odd n then id else negate) $ (foldr (+) zero (map (\i -> (if odd i then negate else id) $ (lambda i x * psi (n - i) x)) [0..n-1])) /# n
+    lambda n x = (if odd n then id else negate) . fromJust $ (foldr (+) zero (map (\i -> (if odd i then negate else id) $ (lambda i x * psi (n - i) x)) [0..n-1])) /# n
 
 -- Basically a Q-algebra, division by integer
-class CZAlgebra m => CQAlgebra m where
-    (/#) :: m -> Int -> m
+class CPartialQModule m where
+    (/#) :: m -> Integer -> Maybe m
 
 
+
+-----------------------------------------------------------------------------
+-- Instances for type constructors
+-----------------------------------------------------------------------------
+
+
+
+instance (CAdd m, CAdd n) => CAdd (m, n) where
+    (a, b) + (c, d) = (a + c, b + d)
+    (a, b) - (c, d) = (a - c, b - d)
+    negate   (a, b) = (negate a, negate b)
+    zero            = (zero, zero)
+
+instance (CMult m, CMult n) => CMult (m, n) where
+    (a, b) * (c, d) = (a * c, b * d)
+    (a, b) ^ n      = (a ^ n, b ^ n)
+    e               = (e, e)
+
+instance (CGroup m, CGroup n) => CGroup (m, n) where
+    (a, b) / (c, d) = (a / c, b / d)
+    invert (a, b)   = (invert a, invert b)
+
+instance (CZModule m, CZModule n) => CZModule (m, n) where
+    (a, b) *# n    = (a *# n, b *# n)
+    structureMap n = (structureMap n, structureMap n)
+    one            = (one, one)
+
+instance (CPartialQModule n, CPartialQModule m) => CPartialQModule (n, m) where
+    (a, b) /# n    = liftM2 (\a -> \b -> (a, b)) (a /# n) (b /# n)
+
+
+    
 -----------------------------------------------------------------------------
 -- Instances for common data-types
 -----------------------------------------------------------------------------
 
 
 
-instance CAdd Integer where
-    (+) = (Prelude.+)
-    (-) = (Prelude.-)
-    zero = 0;
-
-instance CMult Integer where
-    (*) = (Prelude.*)
-    (^) = (Prelude.^)
-    e = 1
-
-instance CQAlgebra Integer where
-    n /# m = n `quot` (toInteger m)
-
 instance CAdd Int where
     (+) = (Prelude.+)
     (-) = (Prelude.-)
-    zero = 0;
+    zero = fromIntegral 0
 
 instance CMult Int where
     (*) = (Prelude.*)
     (^) = (Prelude.^)
-    e = 1
+    e = fromIntegral 1
 
-instance CQAlgebra Int where
-    (/#) = quot
+instance CZModule Int where
+    structureMap = fromIntegral
+    n *# m = n * (fromIntegral m)
 
------------------------------------------------------------------------------
--- Instances for type constructors
------------------------------------------------------------------------------
+instance CPartialQModule Int where
+    a /# n = let (quot, rem) = a `divMod` (fromInteger n) in if rem == 0 then Just quot else Nothing
 
+instance CAdd Integer where
+    (+) = (Prelude.+)
+    (-) = (Prelude.-)
+    zero = fromIntegral 0
+
+instance CMult Integer where
+    (*) = (Prelude.*)
+    (^) = (Prelude.^)
+    e = fromIntegral 1
+
+instance CZModule Integer where
+    structureMap = fromIntegral
+    n *# m = n * (fromIntegral m)
+
+instance CPartialQModule Integer where
+    a /# n = let (quot, rem) = a `divMod` (fromInteger n) in if rem == 0 then Just quot else Nothing
