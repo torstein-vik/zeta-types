@@ -75,15 +75,15 @@ instance CAdd (TS m) where
     negate = (>>= (\x -> Symbol [(x, -1)]))
     zero   = Symbol []
 
-instance (CMult m) => CMult (TS m) where
-    (*) = liftM2 (*)
+instance (CMult m, Eq m) => CMult (TS m) where
+    a * b = cleanup $ liftM2 (*) a b
     e   = Symbol [(e, 1)]
 
 -- We need Eq to clean up before quot-ing (if we don't we will get bad results)
-instance (Eq m) => CIntDiv (TS m) where
-    x /: n = mapSnd (`quot` n) `atEach` cleanup x
+instance (Eq m, CMult m) => CQAlgebra (TS m) where
+    x /# n = mapSnd (`quot` n) `atEach` cleanup x
     
--- We need Eq because the definition of lambda requires CIntDiv (/:)
+-- We need Eq because the definition of lambda requires CQAlgebra (/:)
 instance (Eq m, CMult m) => LambdaRing (TS m) where
     psi k = fmap (^k)
 
