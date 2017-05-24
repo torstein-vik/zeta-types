@@ -1,4 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 
 module Algebra where
 
@@ -30,6 +33,23 @@ class CMult m where
     (^) :: m -> Int -> m
 
     x^n = foldr (*) e (replicate n x)
+    
+-- Minimal definition: ()
+class (CMult m, CAdd m) => CZAlgebra m where
+    structureMap :: Int -> m
+    one :: m
+    (*#) :: m -> Int -> m
+    
+    one = e
+    structureMap k
+                | k == 0 = zero
+                | k >  0 = sum
+                | k <  0 = negate sum
+                where 
+                    sum = foldr (+) zero $ replicate (abs k) one
+    x *# n = x * structureMap n
+    
+instance (CMult m, CAdd m) => CZAlgebra m
 
 -- Minimal definition (invert | (/))
 class CMult m => CGroup m where
@@ -41,17 +61,17 @@ class CMult m => CGroup m where
 
 -- Minimal definition: psi
 -- TODO: Memoize lambda for speed
-class (CAdd r, CMult r, CIntDiv r) => LambdaRing r where
+class (CAdd r, CMult r, CQAlgebra r) => LambdaRing r where
     psi :: Int -> r -> r
     lambda :: Int -> r -> r
 
     lambda 0 x = e
     lambda 1 x = x
-    lambda n x = (if odd n then id else negate) $ (foldr (+) zero (map (\i -> (if odd i then negate else id) $ (lambda i x * psi (n - i) x)) [0..n-1])) /: n
+    lambda n x = (if odd n then id else negate) $ (foldr (+) zero (map (\i -> (if odd i then negate else id) $ (lambda i x * psi (n - i) x)) [0..n-1])) /# n
 
 -- Basically a Q-algebra, division by integer
-class CIntDiv m where
-    (/:) :: m -> Int -> m
+class CZAlgebra m => CQAlgebra m where
+    (/#) :: m -> Int -> m
 
 
 -----------------------------------------------------------------------------
@@ -70,8 +90,8 @@ instance CMult Integer where
     (^) = (Prelude.^)
     e = 1
 
-instance CIntDiv Integer where
-    n /: m = n `quot` (toInteger m)
+instance CQAlgebra Integer where
+    n /# m = n `quot` (toInteger m)
 
 instance CAdd Int where
     (+) = (Prelude.+)
@@ -83,7 +103,10 @@ instance CMult Int where
     (^) = (Prelude.^)
     e = 1
 
-instance CIntDiv Int where
-    (/:) = quot
+instance CQAlgebra Int where
+    (/#) = quot
 
+-----------------------------------------------------------------------------
+-- Instances for type constructors
+-----------------------------------------------------------------------------
 
