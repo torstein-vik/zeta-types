@@ -1,4 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module TannakianSymbols (
     module TannakianSymbols,
@@ -98,6 +99,9 @@ instance (Eq m, CMult m) => CPartialQModule (TS m) where
 -- We need Eq because the definition of lambda requires CPartialQModule (/:)
 instance (Eq m, CMult m) => LambdaRing (TS m) where
     psi k = fmap (^k)
+    
+instance CAugmentation Int (TS m) where
+    augmentation x = let Symbol [((), n)] = cleanup . fmap (\_ -> ()) $ x in n
 
 -----------------------------------------------------------------------------
 -- Miscellaneous instances:
