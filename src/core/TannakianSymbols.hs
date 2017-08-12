@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TupleSections #-}
 
 module TannakianSymbols (
     module TannakianSymbols,
@@ -83,15 +84,11 @@ instance CAdd (TS m) where
 -- We need Eq to cleanup
 instance (Eq m) => CZModule (TS m) where
     x *# n = x >>= (\x -> Symbol [(x, n)])
-    x /# n = fmap Symbol . extractMaybe $ mapSnd (/# n) `forEach` cleanup x where
-              extractMaybe :: [(a, Maybe b)] -> Maybe [(a, b)]
-              extractMaybe [] = Just []
-              extractMaybe ((a, Nothing):x) = Nothing
-              extractMaybe ((a, Just b ):x) = extractMaybe x >>= Just . ((a, b):)
+    x /# n = fmap Symbol . sequence . fmap (\(a, b) -> fmap (a,) b) $ mapSnd (/# n) `forEach` cleanup x
 
 instance (CMult m, Eq m) => CMult (TS m) where
     a * b = cleanup $ liftM2 (*) a b
-    e   = Symbol [(e, 1)]
+    e     = Symbol [(e, 1)]
 
     
 -- We need Eq because the definition of lambda requires CPartialQModule (/:)
