@@ -38,7 +38,7 @@ class CMult m where
     x^n = foldr (*) e (replicate (fromInteger n) x)
     
 -- Minimal definition: ()
-class (CMult m, CAdd m) => CZModule m where
+class (CAdd m) => CZModule m where
     structureMap :: Int -> m
     one :: m
     (*#) :: m -> Int -> m
