@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 
 module Algebra where
@@ -67,9 +68,13 @@ class (CAdd r, CMult r, CPartialQModule r) => LambdaRing r where
     lambda n x = (if odd n then id else negate) . fromJust $ (foldr (+) zero (map (\i -> (if odd i then negate else id) $ (lambda i x * psi (n - i) x)) [0..n-1])) /# n
 
 -- Basically a Q-algebra, division by integer
+-- Minimal definition: (/#)
 class CPartialQModule m where
     (/#) :: m -> Integer -> Maybe m
-
+    
+-- Minimal definition: augmentation
+class CAugmentation k m where
+    augmentation :: m -> k
 
 
 -----------------------------------------------------------------------------
@@ -77,7 +82,7 @@ class CPartialQModule m where
 -----------------------------------------------------------------------------
 
 
-
+-- For Cartesian product
 instance (CAdd m, CAdd n) => CAdd (m, n) where
     (a, b) + (c, d) = (a + c, b + d)
     (a, b) - (c, d) = (a - c, b - d)
@@ -101,8 +106,14 @@ instance (CZModule m, CZModule n) => CZModule (m, n) where
 instance (CPartialQModule n, CPartialQModule m) => CPartialQModule (n, m) where
     (a, b) /# n    = liftM2 (\a -> \b -> (a, b)) (a /# n) (b /# n)
 
+instance (CAugmentation k1 n, CAugmentation k2 m) => CAugmentation (k1, k2) (n, m) where
+    augmentation (a, b) = (augmentation a, augmentation b)
 
-    
+
+-- Everything has an augmentation over itself
+instance CAugmentation k k where
+    augmentation = id
+
 -----------------------------------------------------------------------------
 -- Instances for common data-types
 -----------------------------------------------------------------------------
