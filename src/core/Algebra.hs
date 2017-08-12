@@ -76,6 +76,9 @@ class CPartialQModule m where
 class CAugmentation k m where
     augmentation :: m -> k
 
+-- Shortcut for integral augumentations
+aug :: (CAugmentation Int m) => m -> Int
+aug = augmentation
 
 -----------------------------------------------------------------------------
 -- Instances for type constructors
