@@ -79,9 +79,13 @@ instance CAdd (TS m) where
     negate = (>>= (\x -> Symbol [(x, -1)]))
     zero   = Symbol []
 
+instance CZModule (TS m) where
+    x *# n = x >>= (\x -> Symbol [(x, n)])
+
 instance (CMult m, Eq m) => CMult (TS m) where
     a * b = cleanup $ liftM2 (*) a b
     e   = Symbol [(e, 1)]
+
 
 -- We need Eq to clean up before quot-ing (if we don't we will get bad results)
 instance (Eq m, CMult m) => CPartialQModule (TS m) where
