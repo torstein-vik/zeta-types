@@ -48,7 +48,7 @@ forEach f = fmap f . unSymbol
 
 -- The characteristic function associated to the input
 charFunction :: (Eq m) => TS m -> (m -> Int)
-charFunction (Symbol s) x = sum (do {(y, n) <- s; if x == y then return n else []})
+charFunction (Symbol s) x = sum . fmap snd $ filter ((==x).fst) s
 
 -- Cleans up by adding terms with same type together (like 
 -- (1, 1) and (1, 2)) and removing empty ones like (1, 0)
