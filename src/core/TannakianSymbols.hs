@@ -8,6 +8,7 @@ module TannakianSymbols (
   ) where
 
 import Control.Monad
+import Control.Applicative
 
 import Data.List
 import Data.Graph.Inductive.Query.Monad
@@ -75,7 +76,12 @@ instance Monad TS where
     return x = Symbol [(x, 1)]
     Symbol x >>= f = Symbol . concat . map (\(a, n) -> map (mapSnd (*n)) (unSymbol . f $ a)) $ x
 
-    
+instance Alternative TS where
+    empty = zero
+    (<|>) = (+)
+
+instance MonadPlus TS
+
 -----------------------------------------------------------------------------
 -- Algebraic instances:
 -----------------------------------------------------------------------------
