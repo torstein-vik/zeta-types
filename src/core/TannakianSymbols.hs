@@ -46,6 +46,10 @@ atEach f = wrap $ fmap f
 forEach :: ((m, Int) -> n) -> TS m -> [n]
 forEach f = fmap f . unSymbol
 
+-- The characteristic function associated to the input
+charFunction :: (Eq m) => TS m -> (m -> Int)
+charFunction (Symbol s) x = sum (do {(y, n) <- s; if x == y then return n else []})
+
 -- Cleans up by adding terms with same type together (like 
 -- (1, 1) and (1, 2)) and removing empty ones like (1, 0)
 cleanup :: (Eq m) => TS m -> TS m
@@ -96,7 +100,7 @@ instance (Eq m, CMult m) => LambdaRing (TS m) where
     psi k = fmap (^k)
     
 instance CAugmentation Int (TS m) where
-    augmentation x = let Symbol [((), n)] = cleanup . fmap (\_ -> ()) $ x in n
+    augmentation = (flip charFunction) () . (() <$)
 
 -----------------------------------------------------------------------------
 -- Miscellaneous instances:
