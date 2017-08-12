@@ -43,6 +43,7 @@ class (CAdd m) => CZModule m where
     structureMap :: Int -> m
     one :: m
     (*#) :: m -> Int -> m
+    (/#) :: m -> Integer -> Maybe m
     
     one = structureMap 1
     structureMap n = one *# n
@@ -59,18 +60,13 @@ class CMult m => CGroup m where
 
 -- Minimal definition: psi
 -- TODO: Memoize lambda for speed
-class (CAdd r, CMult r, CPartialQModule r) => LambdaRing r where
+class (CAdd r, CMult r, CZModule r) => LambdaRing r where
     psi :: Integer -> r -> r
     lambda :: Integer -> r -> r
 
     lambda 0 x = e
     lambda 1 x = x
     lambda n x = (if odd n then id else negate) . fromJust $ (foldr (+) zero (map (\i -> (if odd i then negate else id) $ (lambda i x * psi (n - i) x)) [0..n-1])) /# n
-
--- Basically a Q-algebra, division by integer
--- Minimal definition: (/#)
-class CPartialQModule m where
-    (/#) :: m -> Integer -> Maybe m
     
 -- Minimal definition: augmentation
 class CAugmentation k m where
@@ -103,11 +99,9 @@ instance (CGroup m, CGroup n) => CGroup (m, n) where
 
 instance (CZModule m, CZModule n) => CZModule (m, n) where
     (a, b) *# n    = (a *# n, b *# n)
+    (a, b) /# n    = liftM2 (\a -> \b -> (a, b)) (a /# n) (b /# n)
     structureMap n = (structureMap n, structureMap n)
     one            = (one, one)
-
-instance (CPartialQModule n, CPartialQModule m) => CPartialQModule (n, m) where
-    (a, b) /# n    = liftM2 (\a -> \b -> (a, b)) (a /# n) (b /# n)
 
 instance (CAugmentation k1 n, CAugmentation k2 m) => CAugmentation (k1, k2) (n, m) where
     augmentation (a, b) = (augmentation a, augmentation b)
@@ -136,8 +130,6 @@ instance CMult Int where
 instance CZModule Int where
     structureMap = fromIntegral
     n *# m = n * (fromIntegral m)
-
-instance CPartialQModule Int where
     a /# n = let (quot, rem) = a `divMod` (fromInteger n) in if rem == 0 then Just quot else Nothing
 
 instance CAdd Integer where
@@ -153,6 +145,4 @@ instance CMult Integer where
 instance CZModule Integer where
     structureMap = fromIntegral
     n *# m = n * (fromIntegral m)
-
-instance CPartialQModule Integer where
     a /# n = let (quot, rem) = a `divMod` (fromInteger n) in if rem == 0 then Just quot else Nothing
