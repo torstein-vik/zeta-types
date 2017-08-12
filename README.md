@@ -1,14 +1,12 @@
-# The Zeta Types Project
-#### _A framework for compution and storing of zeta types_
+# The Zeta Types Haskell Project
 
 ## The Project
 
-The project mainly features a haskell backend, interfacing with python/sagemath via FFI and C. Haskell is used because its type- and pattern-matching system and are very practical for working with local zeta types (which may appear in at least four different forms.) We also plan to create a website giving access to information and resources about the grand project, as well as hopefully a large database of zeta-types from various L-functions, and a framework for interacting and computing.
+This project is an implementation of tannakian symbols and zeta types in haskell.
 
 ## Installation
 
-So far, only the haskell core is being developed. To interface with this, you can:
- 1. Download the haskell files in [src/backend/core](https://github.com/torstein-vik/zeta-types/tree/master/src/backend/core)
+ 1. Download the haskell files in [src/core](https://github.com/torstein-vik/zeta-types/tree/master/src/core)
  2. Install the haskell platform (for instance [https://www.haskell.org/platform/](https://www.haskell.org/platform/))
  3. Open a command prompt (cmd, bash, etc...)
  4. Navigate to the folder containing the haskell files
@@ -21,8 +19,7 @@ It is probable that during these stages of early development, some modules might
 
 ## Contributors
 _Ask me ([torsteinv64@gmail.com](torsteinv64@gmail.com)) to add you here if you contribute to this project_
-* Torstein Vik, Everything
-* Andreas Holmstrøm, Design
+* Torstein Vik
 
 ## Copyright/License
 
@@ -42,19 +39,11 @@ This framework is and will remain completely open source, under the GNU General 
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
-## LANGUAGES / FRAMEWORKS
-
-* Core: C (used to interface with other languages)
-* Type system and primitive computation: Haskell
-* Experiment Managment: Python/sagemath
-* Database: RethinkDB / MongoDB
-* Website: HTML, CSS, Javascript, JQuery (duh)
 
 ## FOLDER STRUCTURE
 
-* doc -- all kinds of documentation
 * src -- source code
-* -> backend -- main backend logic of the program
-* -> -> core -- data-types and primitive computation
-* -> web -- the website
+* -> core -- main implementation of project
+* -> multiplicative-functions -- implementation specific to tannakian symbols from multiplicative functions
+* -> pattern -- pattern detection code
+* -> case studies -- code for specific cases
