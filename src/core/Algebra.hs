@@ -99,7 +99,7 @@ instance (CGroup m, CGroup n) => CGroup (m, n) where
 
 instance (CZModule m, CZModule n) => CZModule (m, n) where
     (a, b) *# n    = (a *# n, b *# n)
-    (a, b) /# n    = liftM2 (\a -> \b -> (a, b)) (a /# n) (b /# n)
+    (a, b) /# n    = liftM2 (,) (a /# n) (b /# n)
     structureMap n = (structureMap n, structureMap n)
     one            = (one, one)
 
