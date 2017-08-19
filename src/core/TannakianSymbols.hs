@@ -51,6 +51,15 @@ forEach f = fmap f . unSymbol
 charFunction :: (Eq m) => TS m -> (m -> Int)
 charFunction (Symbol s) x = sum . fmap snd $ filter ((==x).fst) s
 
+-- 'Folds' a tannakian symbol. First comes a combiner, then an 'inverter' (for negative multiplicity), then an initial element
+tsfold :: (Eq a) => (a -> b -> b) -> (a -> a) -> b -> TS a -> b
+tsfold f i e = foldr (fmap flip foldr ($) . combinator) e . unSymbol . cleanup where
+               combinator (a, n) = replicate (abs n) (f (if n < 0 then i a else a))
+
+-- 'Like sequenceA', but without foldr it can't be implemented in Traversable
+sequenceTS :: (Monad f, Eq (f a)) => TS (f a) -> f (TS a)
+sequenceTS = fmap Symbol . sequence . fmap (\(a, b) -> fmap (,b) a) . unSymbol . cleanup
+
 -- Cleans up by adding terms with same type together (like 
 -- (1, 1) and (1, 2)) and removing empty ones like (1, 0)
 cleanup :: (Eq m) => TS m -> TS m
@@ -81,6 +90,15 @@ instance Alternative TS where
     (<|>) = (+)
 
 instance MonadPlus TS
+
+-- Problem: account for negative multiplicity...
+{-
+instance Foldable TS where
+    foldr = ?
+
+instance Traversable TS where
+    sequenceA = sequenceTS
+-}
 
 -----------------------------------------------------------------------------
 -- Algebraic instances:
