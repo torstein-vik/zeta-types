@@ -112,7 +112,9 @@ instance CAdd (TS m) where
 -- We need Eq to cleanup
 instance (Eq m) => CZModule (TS m) where
     x *# n = x >>= (\x -> Symbol [(x, n)])
-    x /# n = fmap Symbol . sequence . fmap (\(a, b) -> fmap (a,) b) $ mapSnd (/# n) `forEach` cleanup x
+    x /# n = sequenceTS . Symbol . fmap transferMaybe $ mapSnd (/# n) `forEach` cleanup x where
+             transferMaybe (x, Just n)  = (Just x, n)
+             transferMaybe (x, Nothing) = (Nothing, 1)
 
 instance (CMult m, Eq m) => CMult (TS m) where
     a * b = cleanup $ liftM2 (*) a b
